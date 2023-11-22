@@ -1,6 +1,6 @@
 import sys
 import pygame
-from pygame.locals import QUIT, KEYDOWN, KEYUP, K_SPACE, K_RIGHT, K_LEFT, K_UP, K_DOWN, K_EQUALS, K_MINUS, K_r
+from pygame.locals import QUIT, KEYDOWN, KEYUP, K_SPACE, K_RIGHT, K_LEFT, K_UP, K_DOWN, K_EQUALS, K_MINUS, K_r, K_LEFTBRACKET, K_RIGHTBRACKET
 import math
 import random
 import numpy as np
@@ -87,9 +87,10 @@ def place_text(DISPLAYSURF, text, position):
 pygame.init()
 
 # neural network hyperparameters
-linear_layers = 4
-training_epochs = 2000
-ball_count = 5000
+linear_layers = 10
+training_epochs = 20000
+ball_count = 25000
+neurons = 30
 ball_display_count = ball_count
 
 # Set up font
@@ -177,12 +178,12 @@ while True:
                 if train_mode and not is_fired:
                     # create random balls and append to list
                     for _ in range(ball_count - 1):
-                        angle = np.random.uniform(0, 90)
-                        # vel_max = angle**2 / 300 + 6
+                        angle = np.random.uniform(1, 89)
                         vel_max = math.sqrt(38 / (math.sin(math.radians(angle)) * math.cos(math.radians(angle))))
-                        vel = np.random.uniform(0, vel_max)
+                        vel = np.random.uniform(1.5, vel_max)
                         ball = Ball(x_start=x_start, y_start=y_start, vel_start=vel, angle=angle)
                         ball_list.append(ball)
+                        highest_ball = ball_list[0]
                     is_fired = True
                 else:
                     if not train_mode:
@@ -224,6 +225,10 @@ while True:
                     training_epochs -= 1000
                 else:
                     angle_change = -1
+            elif event.key == K_RIGHTBRACKET and train_mode and neurons < 100:
+                neurons += 1
+            elif event.key == K_LEFTBRACKET and train_mode and neurons > 6:
+                neurons -= 1
             elif event.key == K_EQUALS:
                 if train_mode and ball_count < 100000:
                     ball_count += 1000
@@ -264,24 +269,30 @@ while True:
     if train_mode:
         # text to display
         instruction_text = "Press SPACE to launch and train AimNet!"
+
         left_text = f'Linear Layers (LT / RT)'
-        middle_text = f'Epochs (UP / DN)'
-        right_text = f'Ball Count (+ / -)'
+        middle_text = f'Neurons ([ / ])'
+        right_text = f'Epochs (UP / DN)'
+        last_text = f'Ball Count (+ / -)'
+
         left_value = f'{linear_layers}'
-        middle_value = f'{training_epochs:,}'
-        right_value = f'{ball_display_count:,}'
+        middle_value = f'{neurons}'
+        right_value = f'{training_epochs:,}'
+        last_value = f'{ball_display_count:,}'
 
     else:
         instruction_text = "Choose angle and distance or (r)etrain. AimNet will set launch velocity!"
+
         left_text = f'Target Dist (LT / RT)'
         middle_text = f'Launch Angle (UP / DN)'
         right_text = f'Launch Velocity'
+        last_text = ''
+
         left_value = f'{round(target_distance)} m'
         middle_value = f'{round(aim_angle)} deg'
         right_value = f'{round(launch_velocity, 1)} m/s'
-        # text = f"Test Mode      Target Dist:       Launch Angle:       Launch Vel: "
-        # value_text = f'{round(target_distance)}     {round(aim_angle)}      {round(launch_velocity, 1)}'
-        # Set the initial position of the target
+        last_value = ''
+
         target_x = x_start + target_distance - target_rect.width / 2
         target_y = y_start - target_rect.height / 2
         # Draw target image at the specified position
@@ -299,18 +310,17 @@ while True:
     # track balls in air
     airborne_count = ball_count
 
-    highest_ball = ball[0]
-
     # Draw balls
     for ball in ball_list:
-        if ball.y > highest_ball.y:
-            ball = highest_ball
+        if is_fired:
+            if ball.y < highest_ball.y:
+                highest_ball = ball
         # print(ball.y)
         if ball.has_landed:
             airborne_count -= 1
         # draw the circle
         pygame.draw.circle(DISPLAYSURF, ball.color, (ball.x, ball.y), Ball.radius)
-        if ball.has_landed:
+        if ball.has_landed == False:
             # update ball location
             ball.update(is_fired)
         if not train_mode:
@@ -323,34 +333,32 @@ while True:
                 landed_text = f'Distance: {round(ball.distance, 1)} m'
                 error = round(abs(ball.distance - target_distance), 1)
                 comparison_text = f'{error} m from target.'
-    
+
                 # instruction text
                 place_text(DISPLAYSURF, landed_text, (width // 2, height // 2))
                 place_text(DISPLAYSURF, comparison_text, (width // 2, height // 2 + 30))
 
-            # create tracking rectangle when ball is above screen
-            if ball.y < 0:
-                # set marker width to decrease with height offscreen
-                marker_w = 30 + ball.y / 400
-                marker = pygame.Rect(ball.x - marker_w / 2, 10, marker_w, 4)
-                pygame.draw.rect(DISPLAYSURF, (0, 0, 0), marker)
-
-        else:
-            if airborne_count == 0:
-                has_landed = False
-                ball_display_count = 0
-                print('Training AimNet')
-                nn_model, df = train_neural_net(results, device, linear_layers, training_epochs)
-                print(f'Training complete. Results saved with {len(results)} entries.', flush=True)
-                with open('results.pkl', 'wb') as file:
-                    pickle.dump(results, file)
-                is_fired = False
-                has_landed = True
-                # remove train balls
-                ball_list = []
-                train_mode = False
-
-    print(highest_ball.y)
+        # create tracking rectangle when ball is above screen
+        if ball.y < 0:
+            # set marker width to decrease with height offscreen
+            marker_w = 30 + ball.y / 400
+            marker = pygame.Rect(ball.x - marker_w / 2, 10, marker_w, 4)
+            pygame.draw.rect(DISPLAYSURF, ball.color, marker)
+    # detect when all balls have landed
+    if airborne_count == 0:
+        has_landed = False
+        training_text = f'Now training AimNet....'
+        place_text(DISPLAYSURF, training_text, (width // 2, height // 2))
+        pygame.display.update()
+        nn_model, df = train_neural_net(results, device, linear_layers, training_epochs, neurons)
+        print(f'Training complete. Results saved with {len(results)} entries.', flush=True)
+        with open('results.pkl', 'wb') as file:
+            pickle.dump(results, file)
+        is_fired = False
+        has_landed = True
+        # remove train balls
+        ball_list = []
+        train_mode = False
     
     ball_display_count = airborne_count
 
@@ -358,14 +366,16 @@ while True:
     place_text(DISPLAYSURF, instruction_text, (width // 2, 35))
 
     # variable name text
-    place_text(DISPLAYSURF, left_text, (width // 4, height - 40))
-    place_text(DISPLAYSURF, middle_text, (2 * width // 4, height - 40))
-    place_text(DISPLAYSURF, right_text, (3 * width // 4, height - 40))
+    place_text(DISPLAYSURF, left_text, (width // 5, height - 40))
+    place_text(DISPLAYSURF, middle_text, (2 * width // 5, height - 40))
+    place_text(DISPLAYSURF, right_text, (3 * width // 5, height - 40))
+    place_text(DISPLAYSURF, last_text, (4 * width // 5, height - 40))
 
     # variable value text
-    place_text(DISPLAYSURF, left_value, (width // 4, height - 20))
-    place_text(DISPLAYSURF, middle_value, (2 * width // 4, height - 20))
-    place_text(DISPLAYSURF, right_value, (3 * width // 4, height - 20))
+    place_text(DISPLAYSURF, left_value, (width // 5, height - 20))
+    place_text(DISPLAYSURF, middle_value, (2 * width // 5, height - 20))
+    place_text(DISPLAYSURF, right_value, (3 * width // 5, height - 20))
+    place_text(DISPLAYSURF, last_value, (4 * width // 5, height - 20))
 
     pygame.display.update()
     clock.tick(120)

@@ -14,7 +14,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, explained_variance_score
 from sklearn.model_selection import train_test_split
 
-def train_neural_net(results: dict, device, layers, epochs):
+def train_neural_net(results: dict, device, layers, epochs, neurons):
   '''
   Takes dict of projectile examples, trains a neural net, and returns the model and results dataframe
   '''
@@ -113,7 +113,7 @@ def train_neural_net(results: dict, device, layers, epochs):
   torch.manual_seed(57)
 
   # create instance of model 0
-  model_0 = RegressionModelV0(input_size=2, hidden_size=100, output_size=1).to(device)
+  model_0 = RegressionModelV0(input_size=2, hidden_size=neurons, output_size=1).to(device)
 
   # define a loss function (mean squared error)
   loss_fn = nn.MSELoss()
