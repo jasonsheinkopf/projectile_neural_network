@@ -34,8 +34,8 @@ def train_neural_net(results: dict, device, layers, epochs, neurons):
     df['vel_start_norm'] = df['vel_start'] / df['max_vel_start']
 
     # check value range again to make sure they range [0, 1]
-    print(f"Non-normalized max values: Angle: {df['angle'].max()}, Dist: {df['distance'].max()}, Vel: {df['vel_start'].max()}")
-    print(f"Normalized max values: Angle: {df['angle_norm'].max()}, Dist: {df['distance_norm'].max()}, Vel: {df['vel_start_norm'].max()}")
+    # print(f"Non-normalized max values: Angle: {df['angle'].max()}, Dist: {df['distance'].max()}, Vel: {df['vel_start'].max()}")
+    # print(f"Normalized max values: Angle: {df['angle_norm'].max()}, Dist: {df['distance_norm'].max()}, Vel: {df['vel_start_norm'].max()}")
 
     # extract values from normalized df
     X_values = df[['angle_norm', 'distance_norm']].values

@@ -88,8 +88,8 @@ pygame.init()
 
 # neural network hyperparameters
 linear_layers = 10
-training_epochs = 20000
-ball_count = 25000
+training_epochs = 10000
+ball_count = 30000
 neurons = 30
 ball_display_count = ball_count
 
@@ -157,6 +157,9 @@ clock = pygame.time.Clock()
 # var for smooth control
 target_change = 0
 angle_change = 0
+
+# initial deviation
+deviation = None
 
 
 # draw arrow during test
@@ -270,10 +273,10 @@ while True:
         # text to display
         instruction_text = "Press SPACE to launch and train AimNet!"
 
-        left_text = f'Linear Layers (LT / RT)'
-        middle_text = f'Neurons ([ / ])'
-        right_text = f'Epochs (UP / DN)'
-        last_text = f'Ball Count (+ / -)'
+        left_text = f'Linear Layers LT/RT'
+        middle_text = f'Neurons [/]'
+        right_text = f'Epochs UP/DN'
+        last_text = f'Ball Count +/-'
 
         left_value = f'{linear_layers}'
         middle_value = f'{neurons}'
@@ -283,15 +286,15 @@ while True:
     else:
         instruction_text = "Choose angle and distance or (r)etrain. AimNet will set launch velocity!"
 
-        left_text = f'Target Dist (LT / RT)'
-        middle_text = f'Launch Angle (UP / DN)'
-        right_text = f'Launch Velocity'
-        last_text = ''
+        left_text = f'Dist LT/RT'
+        middle_text = f'Angle UP/DN'
+        right_text = f'Launch Vel'
+        last_text = '' if deviation is None else 'Deviation'
 
         left_value = f'{round(target_distance)} m'
         middle_value = f'{round(aim_angle)} deg'
         right_value = f'{round(launch_velocity, 1)} m/s'
-        last_value = ''
+        last_value = '' if deviation is None else f'{deviation} m'
 
         target_x = x_start + target_distance - target_rect.width / 2
         target_y = y_start - target_rect.height / 2
@@ -331,8 +334,8 @@ while True:
             if ball.has_landed:
                 distance = ball.distance
                 landed_text = f'Distance: {round(ball.distance, 1)} m'
-                error = round(abs(ball.distance - target_distance), 1)
-                comparison_text = f'{error} m from target.'
+                deviation = round(abs(ball.distance - target_distance), 1)
+                comparison_text = f'{deviation} m from target.'
 
                 # instruction text
                 place_text(DISPLAYSURF, landed_text, (width // 2, height // 2))
