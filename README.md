@@ -8,7 +8,7 @@ AimNET is projectile motion simulator that allows the user to train a customizab
 
 <img src="media/aimnet_vid_2.gif" alt="Your GIF" width="500">  
 
-### Step 2. Run inference on entire test dataset and results
+### Step 2. Run inference on entire test dataset and plot results
 
 <img src="media/aimnet_vid_3.gif" alt="Your GIF" width="500">  
 
