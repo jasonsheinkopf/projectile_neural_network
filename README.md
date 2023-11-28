@@ -19,7 +19,7 @@ AimNET is projectile motion simulator that allows the user to train a customizab
 # Installation
 ## 1. Clone the Repository
 ```bash
-git clone https://github.com/jasonsheinkopf/projectile_motion_neural_network
+git clone https://github.com/jasonsheinkopf/projectile_neural_network
 ```
 ## 2. Create virtual environment from .yml
 ```bash
