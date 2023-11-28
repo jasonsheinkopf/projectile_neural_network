@@ -87,10 +87,10 @@ def place_text(DISPLAYSURF, text, position):
 pygame.init()
 
 # neural network hyperparameters
-linear_layers = 10
+linear_layers = 5
 training_epochs = 10000
-ball_count = 30000
-neurons = 30
+ball_count = 20000
+neurons = 10
 ball_display_count = ball_count
 
 # Set up font
